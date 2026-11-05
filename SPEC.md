@@ -65,6 +65,7 @@ GrapheneOS and other ROMs with no GMS. License GPLv3. Distribution is F-Droid an
 | Driving route | Google's line with open-data steps (`HybridRoute`, section 4.1): FOSSGIS OSRM's where both routes share the road, else a Valhalla map match, map-tile street names, then bare turns. Without Google: the OSRM route. Without OSRM: Google's own short steps, or the on-phone router | Yes | Downloaded `.obf` region |
 | Traffic and live ETA | Google directions | Yes | No |
 | Walking, cycling | Walk: OSRM foot; Google's walk only when 15% shorter (`WALK_GOOGLE_SHORTER`). Bike: safety-weighted by default, on-phone profile, else Valhalla | Walk: to compare. Bike: not by default | Downloaded region |
+| Motorcycle | Valhalla's `motorcycle` costing, end to end: Google's keyless endpoint has no two-wheeler mode (probing `!1e0..32` answers drive, cycle, walk and a drive variant only), and OSRM has no scooter backend. The costing keeps the route off roads OSM tags as closed to motor vehicles, without being told | No | Downloaded region, once a bake carries the profile (`car` + `bicycle` only today) |
 | Traffic layer; satellite past z19 | Google raster tiles, both off by default | Yes | No |
 | Traffic controls (lights, stops, crossings, humps) | Per-region road-features bake, Overpass only where no region exists | No | Yes |
 | Surveillance and speed cameras | Bundled and hosted DeFlock dataset; OSM speed cameras | No | Yes |

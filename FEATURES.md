@@ -97,7 +97,7 @@ What Vela Maps does today, one line per feature. How each one works is in [SPEC.
 
 ## Routes
 
-- Directions by car, foot, bike or transit, from where you are or any start you pick.
+- Directions by car, motorbike, foot, bike or transit, from where you are or any start you pick.
 - A drive follows Google's route, which knows traffic and closures. Street names, lanes and exits
   come from open data. With Google off the route comes from open routers, and keeps off farm tracks.
 - Up to four routes with time, distance and traffic. Tap one on the map to switch.
@@ -109,6 +109,9 @@ What Vela Maps does today, one line per feature. How each one works is in [SPEC.
 - Avoid tolls, highways, ferries or cameras. Set Leave now, Depart at or Arrive by.
 - Walking uses the open foot router. "Bike routes prefer bike lanes and quiet streets" is on by
   default.
+- A motorbike route is planned for a motorbike, not for a car: the open scooter router keeps to the
+  roads two-wheelers may use, so it stays off the expressways a car takes, and the avoid-toll and
+  avoid-highway choices apply to it. Its time carries no live traffic.
 - A step list before you start. Tap a step to see it on the map.
 - "Save this route" keeps a route and offers it as "Your route" for the same trip, named
   "<start> to <end>" when the trip was planned from a place.

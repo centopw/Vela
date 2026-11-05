@@ -110,8 +110,35 @@ object ValhallaRouter {
     fun driveRoute(
         http: OkHttpClient, points: List<LatLng>,
         avoidTolls: Boolean = false, avoidHighways: Boolean = false, avoidFerries: Boolean = false, timeoutMs: Long = 4_000,
-    ): Route? {
-        if (points.size < 2) return null
+    ): Route? = vehicleRoute(http, points, "auto", 0.0, avoidTolls, avoidHighways, avoidFerries, timeoutMs, alternates = false)
+
+    /**
+     * A two-wheeler route, from Valhalla's `motorcycle` costing (50cc and up, which is what
+     * Vietnamese riders actually use, and the closer of its two scooter costings to real times).
+     * Its value is the access tags: measured 2026-11-05, HCMC to My Tho comes back 75.2 km / 2.3 h
+     * on QL1A while [driveRoute]'s `auto` costs the same trip 79.0 km / 2.0 h through the
+     * "Đường dẫn cao tốc Thành phố Hồ Chí Minh - Trung Lương" ramp — the expressway two-wheelers
+     * are banned from, refused without being told to be. Setting `use_highways` to 0 on top of that
+     * costs a 106.9 km / 3.6 h detour, so [avoidHighways] is only for a rider who asks for it.
+     * `use_tracks` is left at its default: unlike a car, a motorbike in Vietnam takes an unpaved
+     * shoulder as a road.
+     */
+    fun motoRoute(
+        http: OkHttpClient, points: List<LatLng>,
+        avoidTolls: Boolean = false, avoidHighways: Boolean = false, avoidFerries: Boolean = false, timeoutMs: Long = 4_000,
+        alternates: Boolean = true,
+    ): List<Route> = vehicleRoutes(http, points, "motorcycle", null, avoidTolls, avoidHighways, avoidFerries, timeoutMs, alternates)
+
+    private fun vehicleRoute(
+        http: OkHttpClient, points: List<LatLng>, costing: String, useTracks: Double?,
+        avoidTolls: Boolean, avoidHighways: Boolean, avoidFerries: Boolean, timeoutMs: Long, alternates: Boolean,
+    ): Route? = vehicleRoutes(http, points, costing, useTracks, avoidTolls, avoidHighways, avoidFerries, timeoutMs, alternates).firstOrNull()
+
+    private fun vehicleRoutes(
+        http: OkHttpClient, points: List<LatLng>, costing: String, useTracks: Double?,
+        avoidTolls: Boolean, avoidHighways: Boolean, avoidFerries: Boolean, timeoutMs: Long, alternates: Boolean,
+    ): List<Route> {
+        if (points.size < 2) return emptyList()
         val body = buildJsonObject {
             putJsonArray("locations") {
                 points.forEachIndexed { i, p ->
@@ -122,16 +149,17 @@ object ValhallaRouter {
                     })
                 }
             }
-            put("costing", "auto")
+            put("costing", costing)
             putJsonObject("costing_options") {
-                putJsonObject("auto") {
-                    put("use_tracks", 0.0)
+                putJsonObject(costing) {
+                    useTracks?.let { put("use_tracks", it) }
                     if (avoidTolls) put("use_tolls", 0.0)
                     if (avoidHighways) put("use_highways", 0.0)
                     if (avoidFerries) put("use_ferry", 0.0)
                 }
             }
             put("units", "kilometers")
+            if (alternates && points.size == 2) put("alternates", 2)
         }.toString()
         val req = Request.Builder()
             .url(BASE)
@@ -141,8 +169,8 @@ object ValhallaRouter {
         val client = http.newBuilder().callTimeout(timeoutMs, java.util.concurrent.TimeUnit.MILLISECONDS).build()
         val text = runCatching {
             client.newCall(req).execute().use { resp -> if (resp.isSuccessful) resp.body?.string() else null }
-        }.getOrNull() ?: return null
-        return runCatching { parse(text).firstOrNull() }.getOrNull()
+        }.getOrNull() ?: return emptyList()
+        return runCatching { parse(text) }.getOrDefault(emptyList())
     }
 
     /**

@@ -38,6 +38,15 @@ class MapLinkDirectionsTest {
         assertEquals(38.5449, coords.lat!!, 1e-6); assertNull(coords.origin); assertNull(coords.mode)
     }
 
+    @Test fun twoWheelerLinkIsAMotorcycleTrip() {
+        // A link shared from Google Maps' two-wheeler tab. It used to parse as Drive, which handed
+        // the rider Google's CAR line - in Vietnam that runs onto an expressway, where a motorbike
+        // is banned. The mode it names must survive the parse.
+        val l = MapLinkParser.parse("https://www.google.com/maps/dir/?api=1&origin=Hoan+Kiem+Lake&destination=Noi+Bai+Airport&travelmode=two-wheeler")!!
+        assertTrue(l.directions)
+        assertEquals(TravelMode.MOTORCYCLE, l.mode)
+    }
+
     @Test fun pathForm() {
         val l = MapLinkParser.parse("https://www.google.com/maps/dir/Sacramento,+CA/Davis,+CA/@38.55,-121.6,11z/data=!4m2!4m1!3e0")!!
         assertTrue(l.directions)

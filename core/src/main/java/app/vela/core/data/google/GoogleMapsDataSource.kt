@@ -836,6 +836,18 @@ class GoogleMapsDataSource @Inject constructor(
         val osrmWhy = java.util.concurrent.atomic.AtomicReference("empty reply")
         val onOsrmFail: (String) -> Unit = { osrmWhy.set(it) }
         val stage = if (urgent) "urgent" else "ladder"
+        // TWO-WHEELERS. Google's keyless endpoint has no motorcycle mode: probing every value of
+        // its `!1e{MODE}` field from 0 to 32 answered only drive (0), cycle (1), walk (2) and a
+        // second drive shape (10). So this mode is Valhalla's `motorcycle` costing end to end, the
+        // way walking is the open foot router's.
+        // It deliberately does NOT fall through to the chain below: that chain is Google plus OSRM's
+        // CAR routers, and a car line takes Vietnam's expressways, where a motorbike is banned.
+        // A rider with no answer gets "No motorcycle route found"; a rider handed a car route gets
+        // onto a đường cao tốc.
+        if (mode == TravelMode.MOTORCYCLE) {
+            return@io motoRoutes(origin, destination, waypoints, avoidTolls, avoidHighways, avoidFerries, urgent)
+                ?: emptyList()
+        }
         // Bike mode routes for safety over speed (issue #401, default on): the offline engine's
         // bicycle profile where a region is downloaded, else the open Valhalla router told to stay
         // off busy roads. Null = neither answered, so the fastest-route chain below takes over.
@@ -1689,6 +1701,47 @@ class GoogleMapsDataSource @Inject constructor(
         return null
     }
 
+    /** MOTORCYCLE: the on-device scooter profile where a downloaded region has one, else Valhalla's
+     *  `motorcycle` costing. Null = nothing answered, and the caller does NOT try the car chain
+     *  (see the branch in [directionsPlain]). */
+    private suspend fun motoRoutes(
+        origin: LatLng,
+        destination: LatLng,
+        waypoints: List<LatLng>,
+        avoidTolls: Boolean,
+        avoidHighways: Boolean,
+        avoidFerries: Boolean,
+        urgent: Boolean,
+    ): List<Route>? {
+        val mode = TravelMode.MOTORCYCLE
+        val points = listOf(origin) + waypoints + destination
+        if (routeEngine.isReady(mode)) {
+            val budget = if (urgent) MOTO_ONDEVICE_URGENT_MS else MOTO_ONDEVICE_TIMEOUT_MS
+            val onDeviceD = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).async {
+                runCatching {
+                    if (waypoints.isEmpty()) routeEngine.route(origin, destination, mode, avoidTolls, avoidHighways, avoidFerries, maxMs = budget).map { it.copy(offline = true) }
+                    else listOfNotNull(chainOnDevice(points, mode, avoidTolls, avoidHighways, avoidFerries, maxMs = budget))
+                }.getOrDefault(emptyList())
+            }
+            val onDevice = kotlinx.coroutines.withTimeoutOrNull(budget) { onDeviceD.await() } ?: emptyList()
+            if (onDevice.isNotEmpty()) {
+                diag.record("directions", "MOTORCYCLE → on-device ${onDevice.size} routes / ${onDevice.first().maneuvers.size} steps", "")
+                return onDevice
+            }
+        }
+        val online = ValhallaRouter.motoRoute(
+            http, points, avoidTolls, avoidHighways, avoidFerries,
+            timeoutMs = if (urgent) MOTO_ONLINE_URGENT_MS else MOTO_ONLINE_TIMEOUT_MS,
+            alternates = waypoints.isEmpty(),
+        )
+        if (online.isNotEmpty()) {
+            diag.record("directions", "MOTORCYCLE → valhalla ${online.size} routes / ${online.first().maneuvers.size} steps", "")
+            return online
+        }
+        diag.record("directions", "MOTORCYCLE → nothing answered", "")
+        return null
+    }
+
     /** True when [RouteGeometry.spurAt] finds a spur on [route] AND one of the route's own
      *  maneuvers within [SPUR_TURN_NEAR_M] of it is a turn or U-turn. */
     /**
@@ -2215,6 +2268,13 @@ class GoogleMapsDataSource @Inject constructor(
          *  engine usually answers well inside these; past them the online router takes over. */
         const val BIKE_ONDEVICE_TIMEOUT_MS = 6_000L
         const val BIKE_ONDEVICE_URGENT_MS = 3_000L
+        // Motorcycle, which has no Google leg to overlap with: the open scooter router is the whole
+        // answer, so it gets room for a 100 km trip (measured 2026-11-05: Hanoi to Ninh Binh on
+        // valhalla1.openstreetmap.de answers 94 km in ~2 s, but the server is shared and slow).
+        const val MOTO_ONDEVICE_TIMEOUT_MS = 6_000L
+        const val MOTO_ONDEVICE_URGENT_MS = 3_000L
+        const val MOTO_ONLINE_TIMEOUT_MS = 9_000L
+        const val MOTO_ONLINE_URGENT_MS = 4_000L
         // Fallback viewport when no user location is available — search is
         // viewport-driven and needs one. Callers normally pass the real location.
         val DEFAULT_VIEWPORT = LatLng(37.7749, -122.4194)

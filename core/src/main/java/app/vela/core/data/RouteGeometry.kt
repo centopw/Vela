@@ -60,9 +60,13 @@ object RouteGeometry {
     private const val LIGHT_CLUSTER_M = 30.0
     private val json = Json { ignoreUnknownKeys = true }
 
-    /** The FOSSGIS OSRM backend for each mode. Transit has none → null geometry. */
+    /** The FOSSGIS OSRM backend for each mode. Transit has none → null geometry. Motorcycle has
+     *  none either: that server hosts one car, one bike and one foot router, and its car router is
+     *  what would answer a scooter request — a line over a Vietnamese expressway. Motorcycle routes
+     *  come back with Valhalla's own shape, so nothing here is asked for them. */
     private fun backend(mode: TravelMode): String? = when (mode) {
         TravelMode.DRIVE -> "routed-car"
+        TravelMode.MOTORCYCLE -> null
         TravelMode.BICYCLE -> "routed-bike"
         TravelMode.WALK -> "routed-foot"
         TravelMode.TRANSIT -> null
