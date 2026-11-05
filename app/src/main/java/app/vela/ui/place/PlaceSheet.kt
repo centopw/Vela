@@ -1813,7 +1813,7 @@ fun DirectionsPanel(
                       .verticalScroll(dirBodyScroll),
               ) {
             Spacer(Modifier.height(10.dp))
-            // Scrollable so all four mode pills keep full size on a narrow screen — without this the
+            // Scrollable so all five mode pills keep full size on a narrow screen — without this the
             // 4th (Bike) overflowed the row and got clipped to the edge as an icon-only stub.
             if (!googleHeader) Row(
                 Modifier.horizontalScroll(rememberScrollState()),
@@ -1821,6 +1821,7 @@ fun DirectionsPanel(
             ) {
                 listOf(
                     Triple(TravelMode.DRIVE, stringResource(R.string.place_mode_drive), Sym.DirectionsCar),
+                    Triple(TravelMode.MOTORCYCLE, stringResource(R.string.place_mode_motorcycle), Sym.TwoWheeler),
                     Triple(TravelMode.TRANSIT, stringResource(R.string.place_mode_transit), Sym.DirectionsBus),
                     Triple(TravelMode.WALK, stringResource(R.string.place_mode_walk), Sym.DirectionsWalk),
                     Triple(TravelMode.BICYCLE, stringResource(R.string.place_mode_bike), Sym.DirectionsBike),
@@ -1894,10 +1895,11 @@ fun DirectionsPanel(
                     }
                 }
             }
-            // Route preferences, drive only (tolls/motorways/ferries mean nothing on foot or transit).
-            // Honored on-device where the region graph carries the avoid profiles; online the
-            // route falls back to normal rather than failing (the public OSRM can't exclude).
-            if (currentMode == TravelMode.DRIVE) {
+            // Route preferences, for the modes that ride roads a car may use (tolls/motorways/ferries
+            // mean nothing on foot or transit). Honored on-device where the region graph carries the
+            // avoid profiles; online the route falls back to normal rather than failing (the public
+            // OSRM can't exclude) — except motorcycle, whose scooter router excludes them itself.
+            if (currentMode.motorVehicle) {
                 Spacer(Modifier.height(10.dp))
                 Row(
                     Modifier.horizontalScroll(rememberScrollState()).padding(end = 12.dp),

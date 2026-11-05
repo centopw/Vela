@@ -7139,8 +7139,10 @@ class MapViewModel @Inject constructor(
     ) {
         modeEtaJob?.cancel()
         val known = modeEtaCache[key].orEmpty()
-        // Cheap OSRM modes first; transit last because it is a hidden-WebView page load.
-        val missing = listOf(TravelMode.DRIVE, TravelMode.WALK, TravelMode.BICYCLE, TravelMode.TRANSIT)
+        // Cheap OSRM modes first; transit last because it is a hidden-WebView page load. Motorcycle
+        // is in the list so its tab shows a time like its neighbours, but it is the open scooter
+        // router's, not OSRM's: one Valhalla call per trip, in this loop's own sequence.
+        val missing = listOf(TravelMode.DRIVE, TravelMode.MOTORCYCLE, TravelMode.WALK, TravelMode.BICYCLE, TravelMode.TRANSIT)
             .filter { it != except && it !in known }
             .filter { it != TravelMode.TRANSIT || app.vela.core.data.RoutingPrefs.googleTraffic || googleOff() } // a Google page load, unless the planner answers
         if (missing.isEmpty()) return
@@ -9760,7 +9762,7 @@ class MapViewModel @Inject constructor(
 
     private fun refreshTransitLines(south: Double, west: Double, north: Double, east: Double, zoom: Double) {
         val off = !app.vela.ui.TransitLayer.on.value || zoom < TRANSIT_LINES_MIN_ZOOM ||
-            (_state.value.navigating && _state.value.travelMode == TravelMode.DRIVE)
+            (_state.value.navigating && _state.value.travelMode.motorVehicle)
         if (off) {
             transitLinesKey = null
             transitLinesJob?.cancel()

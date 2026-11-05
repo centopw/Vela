@@ -43,11 +43,16 @@ object DirectionsPb {
     ): String {
         val modeCode = when (mode) {
             TravelMode.DRIVE -> 0
+            // Google's keyless endpoint has no two-wheeler mode: every value 0..32 was probed
+            // 2026-11-05 and only 0 (drive), 1 (cycle), 2 (walk) and 10 (a drive variant) answered
+            // with a route at all. Motorcycle never reaches here — [directions] asks Valhalla for
+            // it — so this slot exists only to keep the `when` honest.
+            TravelMode.MOTORCYCLE -> 0
             TravelMode.BICYCLE -> 1
             TravelMode.WALK -> 2
             TravelMode.TRANSIT -> 3
         }
-        val drive = mode == TravelMode.DRIVE
+        val drive = mode.motorVehicle
         val fitted = RequestShape.fitDirections(template, listOf(origin) + waypoints + destination)
         return BrowserViewport.apply(withWaypoints(withAvoid(fitted, avoidTolls && drive, avoidHighways && drive, avoidFerries && drive), waypoints))
             .replace("{OLAT}", origin.lat.toString())

@@ -4096,7 +4096,7 @@ private fun MapSurface(
         // The flag is left for a trip that ends at "your location", which has no place to draw.
         destinationPin = if (chooserUp && chooserDest == null) state.myLocation else null,
         navMode = state.navigating,
-        navDriveMode = state.travelMode == app.vela.core.model.TravelMode.DRIVE,
+        navDriveMode = state.travelMode.motorVehicle,
         navLabelExclude = navLabelExclude,
         navUpcomingRoads = navUpcomingRoads,
         onNavRoadLatin = { vm.onNavRoadLatin(it) },
@@ -4248,7 +4248,7 @@ private fun MapSurface(
         inNavOverview = state.inNavOverview,
         navShields = remember(state.activeRoute, state.navigating, state.travelMode) {
             val r = state.activeRoute
-            if (!state.navigating || r == null || state.travelMode != app.vela.core.model.TravelMode.DRIVE) emptyList()
+            if (!state.navigating || r == null || !state.travelMode.motorVehicle) emptyList()
             else app.vela.core.nav.RouteShields.points(r)
         },
         basemapArchive = state.basemapArchive,

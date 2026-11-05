@@ -303,6 +303,33 @@ default, `RoutingPrefs.bikeSafe`), a bike trip is routed for safety:
 
 Bike routes carry no traffic.
 
+### Motorcycles
+
+`TravelMode.MOTORCYCLE` is the only mode with no Google leg: Google's keyless
+`/maps/preview/directions` has no two-wheeler option. Its `!20m5!1e{N}` field answers 0 (drive),
+1 (cycle), 2 (walk) and 10 (a drive variant) and nothing else — every value from 0 to 32 was sent
+on 2026-11-05, and a 92 km Hanoi trip came back as 1 hr 33 min on the expressway at 0 and 10,
+20 hr 15 min on foot at 2, and no reply at all elsewhere. (Google's *keyed* Routes API does have
+`TWO_WHEELER`, in a handful of countries; this endpoint does not.)
+
+So a motorcycle trip is Valhalla's `motorcycle` costing end to end, from `motoRoutes`: the
+on-device scooter profile where a region has one (none do yet — the bake prepares `car` and
+`bicycle`), else `valhalla1.openstreetmap.de`. It does not fall through to the drive chain when
+that answers nothing. The drive chain is Google plus OSRM's car routers, and a car line takes the
+expressways a motorbike is banned from; "No motorcycle route found" is the better outcome.
+
+The costing itself is what keeps the rider legal, without being told to. On 2026-11-05, Ho Chi
+Minh City to My Tho came back 75.2 km / 2.3 h on QL1A under `motorcycle`, while `auto` costed the
+same trip 79.0 km / 2.0 h through a "Đường dẫn cao tốc Thành phố Hồ Chí Minh - Trung Lương" ramp.
+Adding `use_highways: 0` on top of that made it worse (106.9 km / 3.6 h), because the access tags
+already did the job and the knob then prices the whole motorway *class* out, including the legal
+expressway-adjacent roads. So `avoidHighways` maps to `use_highways` only when the rider asks for
+it, and tolls and ferries map the same way.
+
+ETAs are the router's own free-flow times: no live traffic, no incidents, no closure awareness.
+Where that matters, Drive mode with "Avoid highways" and "Avoid tolls" is the alternative — it
+keeps Google's traffic but rides the car network's rules, not the motorbike's.
+
 ### Offline: the on-phone router
 
 For driving and walking, `ObfRouteEngine` answers when the open router cannot. It returns one

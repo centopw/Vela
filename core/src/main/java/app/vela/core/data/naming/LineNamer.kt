@@ -140,7 +140,7 @@ object LineNamer {
             // Highways from the tiles' road class: joining one is a ramp, leaving one an exit, and a
             // gentle split between two is a keep. A bend that keeps the name is a "continue".
             val fast = setOf("motorway", "trunk")
-            val drive = mode == TravelMode.DRIVE
+            val drive = mode.motorVehicle
             val bIn = drive && beforeFar?.cls in fast; val aIn = drive && afterFar?.cls in fast
             events += when {
                 aIn && !bIn -> Ev(i, if (a > 0) ManeuverType.RAMP_RIGHT else ManeuverType.RAMP_LEFT, mod, afterFar?.name, "on ramp")

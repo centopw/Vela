@@ -471,6 +471,12 @@ class ObfRouteEngine(private val obfRootOf: () -> File) : RouteEngine {
         // routing.xml profile names.
         private fun profileFor(mode: TravelMode): String? = when (mode) {
             TravelMode.DRIVE -> "car"
+            // OsmAnd's routing.xml has the profile, but no region Vela publishes carries its
+            // routing data: scripts/bake-lib.sh prepares `car` and `bicycle` only. Until a bake
+            // adds it the router refuses the name, which every caller already absorbs into "no
+            // offline route" — and [GoogleMapsDataSource.motoRoutes] then asks Valhalla. What it
+            // must never do is answer with the car route an offline fallback would produce.
+            TravelMode.MOTORCYCLE -> "motorcycle"
             TravelMode.BICYCLE -> "bicycle"
             TravelMode.WALK -> "pedestrian"
             else -> null

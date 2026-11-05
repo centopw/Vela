@@ -81,6 +81,7 @@
     <string name="settings_navigation">Navigation</string>
     <string name="settings_vibrate_on_turns">Vibrate on turns</string>
     <string name="settings_mode_driving">Driving</string>
+    <string name="settings_mode_motorcycling">Motorcycling</string>
     <string name="settings_mode_walking">Walking</string>
     <string name="settings_mode_cycling">Cycling</string>
     <string name="settings_mode_transit">Transit</string>
@@ -540,6 +541,7 @@
     <string name="place_swap_start_destination">Swap start and destination</string>
     <string name="place_close_directions">Close directions</string>
     <string name="place_mode_drive">Drive</string>
+    <string name="place_mode_motorcycle">Motorcycle</string>
     <string name="place_mode_transit">Transit</string>
     <string name="place_mode_walk">Walk</string>
     <string name="place_mode_bike">Bike</string>

@@ -1,6 +1,13 @@
 package app.vela.core.model
 
-enum class TravelMode { DRIVE, WALK, BICYCLE, TRANSIT }
+enum class TravelMode {
+    DRIVE, MOTORCYCLE, WALK, BICYCLE, TRANSIT;
+
+    /** True for the modes that drive on roads a car may use, and whose guidance therefore takes
+     *  car-shaped thresholds: the off-route corridor, the moving-speed floor, lane arrows. A
+     *  motorcycle is one of these even though its ROUTE comes from a different router. */
+    val motorVehicle: Boolean get() = this == DRIVE || this == MOTORCYCLE
+}
 
 enum class ManeuverType {
     DEPART, ARRIVE, CONTINUE, STRAIGHT,

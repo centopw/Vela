@@ -138,7 +138,11 @@ object MapLinkParser {
         if ("/dir/" !in raw && !raw.substringBefore('?').endsWith("/dir")) return null
         val mode = when (queryParam(raw, "travelmode")?.lowercase()) {
             "walking" -> TravelMode.WALK; "bicycling" -> TravelMode.BICYCLE; "transit" -> TravelMode.TRANSIT
-            "driving", "two-wheeler" -> TravelMode.DRIVE; else -> null
+            "driving" -> TravelMode.DRIVE
+            // A shared two-wheeler link is a motorbike trip. Reading it as Drive handed the rider
+            // Google's car line, which takes Vietnam's expressways, where a bike is banned.
+            "two-wheeler" -> TravelMode.MOTORCYCLE
+            else -> null
         }
         // Maps URLs API: /maps/dir/?api=1&destination=B&origin=A&waypoints=C|D&travelmode=walking
         queryParam(raw, "destination")?.let { d ->

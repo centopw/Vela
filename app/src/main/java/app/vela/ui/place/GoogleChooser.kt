@@ -463,7 +463,7 @@ fun GoogleStyleDirectionsPanel(
                             Box(Modifier.padding(horizontal = 16.dp)) {
                                 DepartTimeChooser(route, dim, isTransit = false, onTimeSelected = onTimeSelected)
                             }
-                            if (currentMode == TravelMode.DRIVE) {
+                            if (currentMode.motorVehicle) {
                                 Row(
                                     Modifier.horizontalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 8.dp),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -576,6 +576,7 @@ fun GoogleStyleDirectionsPanel(
 internal fun modeTitle(mode: TravelMode): String = stringResource(
     when (mode) {
         TravelMode.DRIVE -> R.string.place_mode_drive
+        TravelMode.MOTORCYCLE -> R.string.place_mode_motorcycle
         TravelMode.TRANSIT -> R.string.place_mode_transit
         TravelMode.WALK -> R.string.place_mode_walk
         TravelMode.BICYCLE -> R.string.place_mode_bike
@@ -630,6 +631,7 @@ internal fun ModeTabs(
     Row(modifier.horizontalScroll(rememberScrollState()).padding(start = 8.dp)) {
         listOf(
             Triple(TravelMode.DRIVE, R.string.place_mode_drive, Sym.DirectionsCar),
+            Triple(TravelMode.MOTORCYCLE, R.string.place_mode_motorcycle, Sym.TwoWheeler),
             Triple(TravelMode.TRANSIT, R.string.place_mode_transit, Sym.DirectionsBus),
             Triple(TravelMode.WALK, R.string.place_mode_walk, Sym.DirectionsWalk),
             Triple(TravelMode.BICYCLE, R.string.place_mode_bike, Sym.DirectionsBike),

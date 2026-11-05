@@ -380,13 +380,17 @@ internal fun NavigationSettingsScreen(vm: MapViewModel, onBack: () -> Unit) {
             // The ROOT swallows bare LEFT/RIGHT (SettingsScaffold), so this horizontal row drives
             // its OWN LEFT/RIGHT via FocusRequesters - requestFocus (not moveFocus) never clears at
             // the ends, and consuming the key stops it reaching the root swallow.
-            val chipFocus = remember { List(4) { FocusRequester() } }
-            listOf(
+            val modes = listOf(
                 TravelMode.DRIVE to stringResource(R.string.settings_mode_driving),
+                TravelMode.MOTORCYCLE to stringResource(R.string.settings_mode_motorcycling),
                 TravelMode.WALK to stringResource(R.string.settings_mode_walking),
                 TravelMode.BICYCLE to stringResource(R.string.settings_mode_cycling),
                 TravelMode.TRANSIT to stringResource(R.string.settings_mode_transit),
-            ).forEachIndexed { i, (mode, label) ->
+            )
+            // Sized from the list, so adding a mode cannot leave a chip without a FocusRequester
+            // (this was List(4) beside a four-item list; a fifth chip indexed past it and threw).
+            val chipFocus = remember(modes.size) { List(modes.size) { FocusRequester() } }
+            modes.forEachIndexed { i, (mode, label) ->
                 var on by remember(mode) {
                     val default = if (!prefs.getBoolean(Haptics.KEY, true)) false else Haptics.defaultFor(mode)
                     mutableStateOf(prefs.getBoolean(Haptics.keyFor(mode), default))
